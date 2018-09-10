@@ -10,3 +10,4 @@ Here you can also see respective  Israel Hiking and Biking maps. For each locati
 
 ![](https://user-images.githubusercontent.com/1304610/45303191-e8d8c700-b51d-11e8-9c1c-bad43d00e9e4.png)
 
+<img width="415" src="https://user-images.githubusercontent.com/1304610/45306506-8aafe200-b525-11e8-9536-cd0b6467062e.jpg">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img width="415" src="https://user-images.githubusercontent.com/1304610/45306505-8a174b80-b525-11e8-84fe-97e32a496db7.jpg">
