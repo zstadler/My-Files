@@ -47,10 +47,10 @@ Includes the following:
 #### Direct user interaction with map
 UX: Map reflects to user's pan, zoom, rotate, and tilt gestures and mouse actions. On-going flights are interrupted. Future GPS-driven updates are paused for 30 seconds.
 
+- Update the map-view target
 - If the map rotation angle was changed
   - Inactivate the rotate button
   - Update the rotate button icon angle from the map-view target rotation angle
-- Update the map-view target
 - Submit a map-view move
   - TBD: is this needed, or is it driven directly from the gestures?
 - Set the pause expiration time to 30 seconds from now 
