@@ -69,7 +69,7 @@
           console.error("Error fetching or processing data:", error);
         }
       }
-      map.on('style.load', () => {
+      map.on('idle', () => {
         map.addSource('tlv_parking', {
           "type": "geojson",
           "attribution": 'Parking data:  <a href="https://apiportal.tel-aviv.gov.il/">Tel Aviv - Yafo municipality</a>',
