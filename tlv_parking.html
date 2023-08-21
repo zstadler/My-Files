@@ -32,10 +32,6 @@
             fetch(PARKING_STATUS_URL).then(response => response.json()),
             fetch(PARKING_STATIONS_URL).then(response => response.json())
           ]);
-        } catch (error) {
-                alert("Error fetching data:" + error.message);
-        }
-        try {
           const features = [];
           // Creating a lookup object for stationsData
           const stationsLookup = {};
@@ -72,7 +68,7 @@
           };
           map.getSource('tlv_parking').setData(geojsonMultipoint);
         } catch (error) {
-                alert("Error processing data:" + error.message);
+                alert("Error fetching and processing data: " + error.message);
         }
       }
       map.on('idle', () => {
