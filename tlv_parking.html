@@ -19,8 +19,10 @@
       const map = new maplibregl.Map({
         container: 'map',
         style: "https://raw.githubusercontent.com/IsraelHikingMap/VectorMap/master/Styles/IHM.json",
+        attributionControl: false,
         maxBounds: [34.737371, 32.029416, 34.849637, 32.122799]
       });
+      map.addControl(new maplibregl.AttributionControl({compact: true}));
       map.addControl(new maplibregl.NavigationControl());
       const PARKING_STATUS_URL = "https://api.tel-aviv.gov.il/parking/StationsStatus";
       const PARKING_STATIONS_URL = "https://api.tel-aviv.gov.il/parking/Stations";
@@ -30,6 +32,10 @@
             fetch(PARKING_STATUS_URL).then(response => response.json()),
             fetch(PARKING_STATIONS_URL).then(response => response.json())
           ]);
+        } catch (error) {
+                alert("Error fetching data:" + error.message);
+        }
+        try {
           const features = [];
           // Creating a lookup object for stationsData
           const stationsLookup = {};
@@ -66,7 +72,7 @@
           };
           map.getSource('tlv_parking').setData(geojsonMultipoint);
         } catch (error) {
-                alert(error.messsege);
+                alert("Error processing data:" + error.message);
         }
       }
       map.on('idle', () => {
