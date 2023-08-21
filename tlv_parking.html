@@ -66,7 +66,7 @@
           };
           map.getSource('tlv_parking').setData(geojsonMultipoint);
         } catch (error) {
-          console.error("Error fetching or processing data:", error);
+                alert(error.messsege);
         }
       }
       map.on('idle', () => {
@@ -75,8 +75,6 @@
           "attribution": 'Parking data:  <a href="https://apiportal.tel-aviv.gov.il/">Tel Aviv - Yafo municipality</a>',
           "data": {type: "FeatureCollection", features: []}
         });
-        updateParkingDataOnMap();
-        window.setInterval(updateParkingDataOnMap, 60000);
         map.addLayer({
           "id": "parking-opacity",
           "type": "background",
@@ -143,6 +141,8 @@
           },
           "paint": {"text-color": "white"}
         });
+        window.setInterval(updateParkingDataOnMap, 60000);
+        updateParkingDataOnMap();
       });
     </script>
   </body>
