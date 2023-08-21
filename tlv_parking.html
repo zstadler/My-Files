@@ -28,10 +28,20 @@
       const PARKING_STATIONS_URL = "https://api.tel-aviv.gov.il/parking/Stations";
       async function updateParkingDataOnMap() {
         try {
-          const [statusData, stationsData] = await Promise.all([
-            fetch(PARKING_STATUS_URL).then(response => response.json()),
-            fetch(PARKING_STATIONS_URL).then(response => response.json())
+          const [statusResponse, stationsResponse] = await Promise.all([
+            fetch(PARKING_STATUS_URL),
+            fetch(PARKING_STATIONS_URL)
           ]);
+
+          if (!statusResponse.ok || !stationsResponse.ok) {
+            throw new Error("Failed to fetch data");
+          }
+
+          const [statusData, stationsData] = await Promise.all([
+              statusResponse.json(),
+              stationsResponse.json()
+          ]);
+
           const features = [];
           // Creating a lookup object for stationsData
           const stationsLookup = {};
@@ -68,7 +78,7 @@
           };
           map.getSource('tlv_parking').setData(geojsonMultipoint);
         } catch (error) {
-                alert("Error fetching and processing data: " + error.message);
+          console.error("Error fetching and processing data:", error);
         }
       }
       map.on('style.load', () => {
