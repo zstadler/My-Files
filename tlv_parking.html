@@ -22,26 +22,27 @@
         attributionControl: false,
         maxBounds: [34.737371, 32.029416, 34.849637, 32.122799]
       });
+      // disable map rotation using right click + drag
+      map.dragRotate.disable();
+      // disable map rotation using touch rotation gesture
+      map.touchZoomRotate.disableRotation();
+      // Add compact attribution
       map.addControl(new maplibregl.AttributionControl({compact: true}));
-      map.addControl(new maplibregl.NavigationControl());
+      map.addControl(new maplibregl.NavigationControl({showCompass: false}));
       const PARKING_STATUS_URL = "https://api.tel-aviv.gov.il/parking/StationsStatus";
       const PARKING_STATIONS_URL = "https://api.tel-aviv.gov.il/parking/Stations";
+      async function fetchData(url) {
+	const response = await fetch(url);
+	if (!response.ok) {
+	  throw new Error(`Failed to fetch data from ${url}`);
+	}
+	return response.json();
+      }
+
       async function updateParkingDataOnMap() {
         try {
-          const [statusResponse, stationsResponse] = await Promise.all([
-            fetch(PARKING_STATUS_URL),
-            fetch(PARKING_STATIONS_URL)
-          ]);
-
-          if (!statusResponse.ok || !stationsResponse.ok) {
-            throw new Error("Failed to fetch data");
-          }
-
-          const [statusData, stationsData] = await Promise.all([
-              statusResponse.json(),
-              stationsResponse.json()
-          ]);
-
+	  const statusData = await fetchData(PARKING_STATUS_URL);
+	  const stationsData = await fetchData(PARKING_STATIONS_URL);
           const features = [];
           // Creating a lookup object for stationsData
           const stationsLookup = {};
