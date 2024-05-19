@@ -107,7 +107,7 @@
           "id": "parking-status",
           "type": "circle",
           "source": "tlv_parking",
-	  "layout": {
+          "layout": {
             "circle-sort-key": ["match",
               ["get", "InformationToShow"],
               "פנוי", 5,
@@ -117,7 +117,7 @@
               "סגור", 0,
               2
             ]
-	  },
+          },
           "paint": {
             "circle-radius": {"stops": [[13, 6], [16, 12]]},
             "circle-color": ["match",
@@ -143,14 +143,17 @@
             "text-size": {"stops": [[13, 12], [16, 24]]},
             "text-offset": [0, 0.5],
             "text-anchor": "top",
-            "symbol-sort-key": ["match",
-              ["get", "InformationToShow"],
-              "פנוי", 5,
-              "מעט", 4,
-              "פעיל", 3,
-              "מלא", 1,
-              "סגור", 0,
-              2
+            "symbol-sort-key": [ "*",
+              -1,
+              ["match",
+                ["get", "InformationToShow"],
+                "פנוי", 5,
+                "מעט", 4,
+                "פעיל", 3,
+                "מלא", 1,
+                "סגור", 0,
+                2
+              ]
             ]
           },
           "paint": {
@@ -172,12 +175,12 @@
           "paint": {"text-color": "white"}
         });
 
-	// Add compact attribution
-	map.addControl(new maplibregl.AttributionControl({
-		compact: true,
-		customAttribution: '<b><span style="color: green;">פנוי</span> <span style="color: orange;">מעט</span> <span style="color: red;">מלא</span> <span style="color: blue;">פעיל</span></b>|Parking data: <a href="https://apiportal.tel-aviv.gov.il/">Tel Aviv - Yafo municipality</a>|<a href="https://israelhiking.osm.org.il/" target="_blank">&copy; IsraelHiking</a> <a href="https://www.openmaptiles.org/" target="_blank">&copy; OpenMapTiles</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>'
-	      }));
-	window.setInterval(updateParkingDataOnMap, 60000);
+        // Add compact attribution
+        map.addControl(new maplibregl.AttributionControl({
+                compact: true,
+                customAttribution: '<b><span style="color: green;">פנוי</span> <span style="color: orange;">מעט</span> <span style="color: red;">מלא</span> <span style="color: blue;">פעיל</span></b>|Parking data: <a href="https://apiportal.tel-aviv.gov.il/">Tel Aviv - Yafo municipality</a>|<a href="https://israelhiking.osm.org.il/" target="_blank">&copy; IsraelHiking</a> <a href="https://www.openmaptiles.org/" target="_blank">&copy; OpenMapTiles</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>'
+              }));
+        window.setInterval(updateParkingDataOnMap, 60000);
         updateParkingDataOnMap();
       });
     </script>
