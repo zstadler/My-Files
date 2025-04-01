@@ -178,7 +178,7 @@
         // Add compact attribution
         map.addControl(new maplibregl.AttributionControl({
                 compact: true,
-                customAttribution: '<b><span style="color: green;">פנוי</span> <span style="color: orange;">מעט</span> <span style="color: red;">מלא</span> <span style="color: blue;">פעיל</span></b>|Parking data: <a href="https://apiportal.tel-aviv.gov.il/">Tel Aviv - Yafo municipality</a>|<a href="https://israelhiking.osm.org.il/" target="_blank">&copy; IsraelHiking</a> <a href="https://www.openmaptiles.org/" target="_blank">&copy; OpenMapTiles</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>'
+	  customAttribution: '<div style="text-align: center;"><b>מקרא: <span style="color: green;">פנוי</span> <span style="color: orange;">מעט</span> <span style="color: red;">מלא</span> <span style="color: blue;">פעיל</span></b><br/>Parking data: <a href="https://apiportal.tel-aviv.gov.il/">Tel Aviv - Yafo municipality</a>|<a href="https://israelhiking.osm.org.il/" target="_blank">&copy; IsraelHiking</a> <a href="https://www.openmaptiles.org/" target="_blank">&copy; OpenMapTiles</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>|Contour data coutesy of Israel Hiking Map</div>'
               }));
         window.setInterval(updateParkingDataOnMap, 60000);
         updateParkingDataOnMap();
