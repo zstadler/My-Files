@@ -27,8 +27,7 @@
       // disable map rotation using touch rotation gesture
       map.touchZoomRotate.disableRotation();
       map.addControl(new maplibregl.NavigationControl({showCompass: false}));
-      const PARKING_STATUS_URL = "https://api.tel-aviv.gov.il/parking/StationsStatus";
-      const PARKING_STATIONS_URL = "https://api.tel-aviv.gov.il/parking/Stations";
+      const PARKING_STATUS_URL = "https://gisn.tel-aviv.gov.il/arcgis/rest/services/IView2/MapServer/970/query?where=1%3D1&outFields=shem_chenyon,lat,lon,status_chenyon&f=json";
       async function fetchData(url) {
         const response = await fetch(url);
         if (!response.ok) {
@@ -40,35 +39,22 @@
       async function updateParkingDataOnMap() {
         try {
           const statusData = await fetchData(PARKING_STATUS_URL);
-          const stationsData = await fetchData(PARKING_STATIONS_URL);
           const features = [];
-          // Creating a lookup object for stationsData
-          const stationsLookup = {};
-          for (const stationItem of stationsData) {
-            stationsLookup[stationItem["AhuzotCode"]] = {
-              latitude: stationItem["GPSLattitude"],
-              longitude: stationItem["GPSLongitude"],
-            };
-          }
-          for (const statusItem of statusData) {
-            if (statusItem["InformationToShow"] !== null && statusItem["InformationToShow"] !== "סגור") {
-              const ahuzotCode = statusItem["AhuzotCode"];
-              if (stationsLookup[ahuzotCode]) {
-                const {latitude, longitude} = stationsLookup[ahuzotCode];
-                const infoToShow = statusItem["InformationToShow"];
-                const name = statusItem["Name"];
-                features.push({
-                  type: "Feature",
-                  geometry: {
-                    type: "Point",
-                    coordinates: [longitude, latitude]
-                  },
-                  properties: {
-                    Name: name,
-                    InformationToShow: infoToShow
-                  }
-                });
-              }
+          for (const statusItem of statusData["features"]) {
+	    const attributes = statusItem["attributes"];
+            const status_chenyon = attributes["status_chenyon"];
+            if (status_chenyon !== "" && status_chenyon !== "סגור") {
+	      features.push({
+		type: "Feature",
+		geometry: {
+		  type: "Point",
+		  coordinates: [attributes["lon"], attributes["lat"]]
+		},
+		properties: {
+		  Name: attributes["shem_chenyon"],
+		  InformationToShow: status_chenyon
+		}
+	      });
             }
           }
           const geojsonMultipoint = {
