@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        cintlv.presglobal.store - Event to Calendar (Style Watch)
 // @namespace   http://tampermonkey.net/
-// @version     2.0 // Major version bump for new watch mechanism
+// @version     2.1
 // @description Adds "Add to Calendar" links (Google Calendar & ICS) to event popups on cintlv.presglobal.store, based on dialog visibility.
 // @author      AI Assistant
 // @match       https://cintlv.presglobal.store/customer*
@@ -154,10 +154,10 @@
      * @param {HTMLElement} eventCardElement - The div.card element containing event details.
      */
     function processEventPopup(eventCardElement) {
-        // Crucial check: Prevent adding links multiple times to the SAME event card.
-        if (eventCardElement.querySelector('#greasemonkey-calendar-links-wrapper')) {
-            console.log('Calendar Script: Links already exist in this event card, skipping processing.');
-            return;
+        // Remove any existing calendar links to prevent duplicate processing
+        const existingLinksWrapper = eventCardElement.querySelector('#greasemonkey-calendar-links-wrapper');
+        if (existingLinksWrapper) {
+            existingLinksWrapper.remove();
         }
 
         const titleElement = eventCardElement.querySelector('.v-card__title.headline');
