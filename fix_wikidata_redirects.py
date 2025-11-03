@@ -1,7 +1,22 @@
 #!/usr/bin/env python3
 
 """
-Finds and fixes redirected Wikidata tags in OpenStreetMap for a given area.
+This script identifies and prepares fixes for redirected Wikidata tags in OpenStreetMap.
+
+It follows the 9-step process outlined by the user:
+1.  Uses Overpass to find all elements in a specific area with a 'wikidata' tag.
+2.  For each unique wikidata ID (QID), fetches its entity data from Wikidata's MediaWiki API.
+3.  Compares the requested QID with the 'id' field in the response to find redirects.
+4.  Keeps a map of all OSM elements that need to be updated.
+5.  Generates a new Overpass query to fetch *only* the elements that need fixing,
+    using 'out meta geom' to get their full data.
+6.  Submits this second query as a POST request and captures the XML.
+7.  Parses the XML and replaces the old wikidata QID with the new, correct QID.
+8.  Adds an 'action="modify"' attribute to each modified OSM element.
+9.  Prints the final, updated XML to standard output.
+
+This output file is suitable for loading into an OSM editor like JOSM for review
+and upload.
 
 Usage:
   fix_wikidata_redirects.py <area_id>
@@ -23,11 +38,10 @@ from typing import Dict, Set, List, Tuple, Any
 # Overpass API endpoint
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
-# Wikidata REST API endpoint for fetching entity items
-# We will append a list of QIDs separated by '|'
-WIKIDATA_API_BASE_URL = "https://www.wikidata.org/w/rest.php/wikibase/v1/entities/items/"
+# Wikidata API endpoint (using the stable MediaWiki API for batch fetching)
+WIKIDATA_API_BASE_URL = "https://www.wikidata.org/w/api.php"
 
-# User-Agent for API requests
+# User-Agent for API requests - using the specific URL provided
 USER_AGENT = "https://github.com/zstadler/My-Files/fix_wikidata_redirects.py"
 # ---
 
@@ -123,7 +137,7 @@ def overpass_query(query: str, response_format: str = 'json') -> Any:
 
 def fetch_wikidata_entities(qids: Set[str]) -> Dict[str, str]:
     """
-    Fetches entity data from Wikidata in batches.
+    Fetches entity data from Wikidata in batches using the MediaWiki API.
     Returns a dictionary mapping old QIDs to new QIDs for redirects.
     Uses request_with_retry for robustness.
     """
@@ -134,20 +148,30 @@ def fetch_wikidata_entities(qids: Set[str]) -> Dict[str, str]:
     for i in range(0, len(qids_list), WIKIDATA_BATCH_SIZE):
         batch = qids_list[i:i + WIKIDATA_BATCH_SIZE]
         ids_param = "|".join(batch)
-        url = f"{WIKIDATA_API_BASE_URL}{ids_param}"
+        
+        # Use MediaWiki API with parameters for reliable batch fetching
+        params = {
+            "action": "wbgetentities",
+            "ids": ids_param,
+            "format": "json",
+            "redirects": "yes"
+        }
         
         log(f"  Fetching batch {i // WIKIDATA_BATCH_SIZE + 1} / {len(qids_list) // WIKIDATA_BATCH_SIZE + 1}...")
         
         try:
+            # Use the base URL and pass parameters separately
             response = request_with_retry(
                 "GET",
-                url,
+                WIKIDATA_API_BASE_URL,
+                params=params,
                 timeout=60
             )
             data = response.json()
             
             # Step 3: Check for redirects
             for requested_qid, entity_data in data.get("entities", {}).items():
+                # The wbgetentities response structure is slightly different but still contains 'id'
                 actual_qid = entity_data.get("id")
                 
                 # Check if 'id' exists and is different from the requested QID
@@ -156,7 +180,7 @@ def fetch_wikidata_entities(qids: Set[str]) -> Dict[str, str]:
                     redirect_map[requested_qid] = actual_qid
 
         except requests.exceptions.RequestException as e:
-            log_error(f"Wikidata API request failed for batch {ids_param}: {e}")
+            log_error(f"Wikidata API request failed for batch: {e}")
             # Continue to next batch
         
         # Be polite to the API
@@ -325,5 +349,5 @@ def main(area_id: str):
 if __name__ == "__main__":
     arguments = docopt(__doc__, version='fix_wikidata_redirects 1.0')
     
+    # docopt uses the key name <area_id> from the Usage string
     main(area_id=arguments['<area_id>'])
-
