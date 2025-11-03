@@ -42,7 +42,7 @@ OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 WIKIDATA_API_BASE_URL = "https://www.wikidata.org/w/api.php"
 
 # User-Agent for API requests - using the specific URL provided
-USER_AGENT = "https://github.com/zstadler/My-Files/fix_wikidata_redirects.py"
+USER_AGENT = "fix_wikidata_redirects.py (https://github.com/zstadler/My-Files/fix_wikidata_redirects.py)"
 # ---
 
 # How many QIDs to query at once from the Wikidata API
@@ -120,7 +120,7 @@ def overpass_query(query: str, response_format: str = 'json') -> Any:
             "POST",
             OVERPASS_URL,
             data={'data': query},
-            timeout=300  # 5-minute timeout
+            timeout=300  # 5-minute timeout for the Python request
         )
         
         log("Query successful.")
@@ -212,6 +212,9 @@ def main(area_id: str):
         log_error("Failed to fetch initial OSM data. Exiting.")
         sys.exit(1)
 
+    element_count = len(osm_data.get("elements", []))
+    log(f"Found {element_count} OSM elements to be processed in this area.")
+
     # Step 2: Collate all unique wikidata QIDs
     log("Step 2: Collating all unique QIDs...")
     all_qids: Set[str] = set()
@@ -246,15 +249,15 @@ def main(area_id: str):
     log("Step 4: Identifying all OSM elements that need fixing...")
     # elements_to_fix will hold sets of IDs, grouped by type
     elements_to_fix: Dict[str, Set[str]] = {"node": set(), "way": set(), "relation": set()}
-    # fix_details_map holds the specific new QID for each element
-    # { ("node", 12345): "Q54321", ... }
-    fix_details_map: Dict[Tuple[str, int], str] = {}
+    # fix_details_map stores the (old_QID, new_QID) tuple
+    fix_details_map: Dict[Tuple[str, int], Tuple[str, str]] = {}
     
     for old_qid, new_qid in redirect_map.items():
         if old_qid in elements_by_qid:
             for osm_type, osm_id in elements_by_qid[old_qid]:
                 elements_to_fix[osm_type].add(str(osm_id))
-                fix_details_map[(osm_type, osm_id)] = new_qid
+                # Store both the old and new QID
+                fix_details_map[(osm_type, osm_id)] = (old_qid, new_qid) 
 
     log(f"Found {len(fix_details_map)} total OSM elements to modify.")
 
@@ -275,7 +278,7 @@ def main(area_id: str):
     # [out:meta geom] is correct: 'meta' provides version info for editing,
     # 'geom' provides node coordinates for ways.
     query_2 = f"""
-    [out:xml][timeout:180];
+    [out:xml][timeout:360];
     (
       {''.join(query_parts)}
     );
@@ -290,7 +293,9 @@ def main(area_id: str):
         sys.exit(1)
 
     # Step 7, 8: Replace values and add action="modify"
-    log("Steps 7 & 8: Parsing XML and applying modifications...")
+    log("Steps 7 & 8: Parsing XML and applying modifications and comments...")
+    
+    modified_count = 0 
     
     try:
         # We must register the namespace to avoid "ns0:" prefixes in the output
@@ -298,16 +303,42 @@ def main(area_id: str):
         
         root = ET.fromstring(xml_data)
         
-        # Iterate over all elements (node, way, relation)
-        modified_count = 0
-        for element in root.findall('node') + root.findall('way') + root.findall('relation'):
+        # We need a copy of the list of children for reliable iteration/modification
+        elements_to_process = root.findall('node') + root.findall('way') + root.findall('relation')
+        
+        for element in elements_to_process:
             osm_type = element.tag
             osm_id = int(element.get('id'))
             key = (osm_type, osm_id)
             
             if key in fix_details_map:
-                new_qid = fix_details_map[key]
+                old_qid, new_qid = fix_details_map[key]
                 
+                osm_link = f"https://www.openstreetmap.org/{osm_type}/{osm_id}"
+                old_wikidata_link = f"https://www.wikidata.org/wiki/{old_qid}"
+                
+                comment_text_1 = f"Fixing wikidata redirect for {osm_type}/{osm_id}: {osm_link}"
+                comment_text_2 = f"Old ID {old_qid} redirected to {new_qid}. Old item link: {old_wikidata_link}"
+
+                comment_1 = ET.Comment(comment_text_1)
+                comment_2 = ET.Comment(comment_text_2)
+                
+                # ADDED: Set tail to insert a newline after each comment for better raw XML readability
+                comment_1.tail = "\n  "
+                comment_2.tail = "\n  "
+
+                # Find the index of the element to insert comments before it
+                root_children = list(root)
+                try:
+                    index = root_children.index(element)
+                    # Insert comment 2 first (it will be placed right before the element)
+                    root.insert(index, comment_2)
+                    # Insert comment 1 second (it will be placed before comment 2)
+                    root.insert(index, comment_1)
+                except ValueError:
+                    # Should not happen, but safe to ignore if the element is not found
+                    pass
+
                 # Step 8: Add action="modify"
                 element.set("action", "modify")
                 
